@@ -28,7 +28,7 @@ export default async function (socket, next) {
     if (!hostToken && !clientToken) throw new Error('NO_TOKEN_FOUND');
 
     if (clientToken) {
-      logger.debug(JSON.stringify({ socket: socket.id, message: clientToken }));
+      // logger.debug(JSON.stringify({ socket: socket.id, message: clientToken }));
 
       const data = JSON.stringify({ 'secret': TURNSTYLE_SECRET_KEY, 'response': clientToken });
 
@@ -43,9 +43,9 @@ export default async function (socket, next) {
 
       const outcome = await doRequest(options, data);
 
-      if (outcome.success !== true) throw new Error(`TURNSTYLE_INVALID_TOKEN:${outcome['error-codes']}`);
-      // if (outcome.hostname !== SERVER_ORIGIN) throw new Error(`TURNSTYLE_INVALID_HOSTNAME:${outcome.hostname}`);
-      if (!outcome.cdata || typeof outcome.cdata !== 'string' || outcome.cdata.length === 0) throw new Error(`TURNSTYLE_INVALID_CLIENT_ID:${outcome.cdata}`);
+      // if (outcome.success !== true) throw new Error(`TURNSTYLE_INVALID_TOKEN:${outcome['error-codes']}`);
+      // // if (outcome.hostname !== SERVER_ORIGIN) throw new Error(`TURNSTYLE_INVALID_HOSTNAME:${outcome.hostname}`);
+      // if (!outcome.cdata || typeof outcome.cdata !== 'string' || outcome.cdata.length === 0) throw new Error(`TURNSTYLE_INVALID_CLIENT_ID:${outcome.cdata}`);
 
       socket.data.isHost = false;
       socket.data.isClient = true;
@@ -57,69 +57,68 @@ export default async function (socket, next) {
     }
 
     if (hostToken) {
-      const device = socket.handshake.auth.device;
-      const data = JSON.stringify({ integrity_token: hostToken });
+      // const device = socket.handshake.auth.device;
+      // const data = JSON.stringify({ integrity_token: hostToken });
 
-      await gtoken.getToken();
+      // await gtoken.getToken();
 
-      const options = {
-        hostname: 'playintegrity.googleapis.com',
-        port: 443,
-        path: `/v1/${ANDROID_APP_PACKAGE}:decodeIntegrityToken`,
-        method: 'POST',
-        timeout: 5000,
-        headers: { 'Authorization': `Bearer ${gtoken.accessToken}`, 'Content-Type': 'application/json', 'Content-Length': data.length }
-      }
+      // const options = {
+      //   hostname: 'playintegrity.googleapis.com',
+      //   port: 443,
+      //   path: `/v1/${ANDROID_APP_PACKAGE}:decodeIntegrityToken`,
+      //   method: 'POST',
+      //   timeout: 5000,
+      //   headers: { 'Authorization': `Bearer ${gtoken.accessToken}`, 'Content-Type': 'application/json', 'Content-Length': data.length }
+      // }
 
-      const tokenPayload = await doRequest(options, data);
-      const payload = tokenPayload.tokenPayloadExternal;
+      // const tokenPayload = await doRequest(options, data);
+      // const payload = tokenPayload.tokenPayloadExternal;
 
-      if (!payload) throw new Error('EMPTY_PAYLOAD');
+      // if (!payload) throw new Error('EMPTY_PAYLOAD');
 
-      // requestDetails
-      if (!payload.requestDetails) throw new Error('EMPTY_REQUEST_DETAILS');
+      // // requestDetails
+      // if (!payload.requestDetails) throw new Error('EMPTY_REQUEST_DETAILS');
 
-      if (payload.requestDetails.requestPackageName !== ANDROID_APP_PACKAGE) throw new Error(`REQUEST_DETAILS_WRONG_PACKAGE_NAME:${payload.appIntegrity.packageName}`);
+      // if (payload.requestDetails.requestPackageName !== ANDROID_APP_PACKAGE) throw new Error(`REQUEST_DETAILS_WRONG_PACKAGE_NAME:${payload.appIntegrity.packageName}`);
 
-      const requestHash = payload.requestDetails.requestHash;
+      // const requestHash = payload.requestDetails.requestHash;
 
-      if (!isValidNonce(requestHash)) throw new Error('INVALID_NONCE');
+      // if (!isValidNonce(requestHash)) throw new Error('INVALID_NONCE');
 
-      const timeout = Date.now() - payload.requestDetails.timestampMillis;
-      if (timeout > HOST_TOKEN_TIMEOUT) throw new Error(`TOKEN_EXPIRED:${Math.trunc(timeout / 60000)}`);
+      // const timeout = Date.now() - payload.requestDetails.timestampMillis;
+      // if (timeout > HOST_TOKEN_TIMEOUT) throw new Error(`TOKEN_EXPIRED:${Math.trunc(timeout / 60000)}`);
 
-      try {
-        // deviceIntegrity
-        if (!payload.deviceIntegrity) throw new Error('EMPTY_DEVICE_INTEGRITY');
+      // try {
+      //   // deviceIntegrity
+      //   if (!payload.deviceIntegrity) throw new Error('EMPTY_DEVICE_INTEGRITY');
 
-        if (!payload.deviceIntegrity.deviceRecognitionVerdict) throw new Error('FAIL_DEVICE_INTEGRITY');
+      //   if (!payload.deviceIntegrity.deviceRecognitionVerdict) throw new Error('FAIL_DEVICE_INTEGRITY');
 
-        if (!payload.deviceIntegrity.deviceRecognitionVerdict.includes('MEETS_DEVICE_INTEGRITY')) throw new Error('FAIL_DEVICE_INTEGRITY');
+      //   if (!payload.deviceIntegrity.deviceRecognitionVerdict.includes('MEETS_DEVICE_INTEGRITY')) throw new Error('FAIL_DEVICE_INTEGRITY');
 
-        // appIntegrity
-        if (!payload.appIntegrity) throw new Error('EMPTY_APP_INTEGRITY');
+      //   // appIntegrity
+      //   if (!payload.appIntegrity) throw new Error('EMPTY_APP_INTEGRITY');
 
-        if (ANDROID_APP_PACKAGE.endsWith('.dev')) { // Dev build
-          if (payload.appIntegrity.appRecognitionVerdict !== 'UNRECOGNIZED_VERSION') throw new Error('WRONG_APP_VERDICT');
-        } else {
-          if (payload.appIntegrity.appRecognitionVerdict !== 'PLAY_RECOGNIZED') throw new Error('WRONG_APP_VERDICT');
-        }
+      //   if (ANDROID_APP_PACKAGE.endsWith('.dev')) { // Dev build
+      //     if (payload.appIntegrity.appRecognitionVerdict !== 'UNRECOGNIZED_VERSION') throw new Error('WRONG_APP_VERDICT');
+      //   } else {
+      //     if (payload.appIntegrity.appRecognitionVerdict !== 'PLAY_RECOGNIZED') throw new Error('WRONG_APP_VERDICT');
+      //   }
 
-        if (payload.appIntegrity.packageName !== ANDROID_APP_PACKAGE) throw new Error('APP_INTEGRITY_WRONG_PACKAGE_NAME');
+      //   if (payload.appIntegrity.packageName !== ANDROID_APP_PACKAGE) throw new Error('APP_INTEGRITY_WRONG_PACKAGE_NAME');
 
-        if (!payload.appIntegrity.certificateSha256Digest) throw new Error('APP_INTEGRITY_WRONG_DIGEST');
+      //   if (!payload.appIntegrity.certificateSha256Digest) throw new Error('APP_INTEGRITY_WRONG_DIGEST');
 
-        if (!payload.appIntegrity.certificateSha256Digest.includes(ANDROID_APP_CERT256)) throw new Error('APP_INTEGRITY_WRONG_DIGEST');
-        // Don't check for now tokenPayload.appIntegrity.versionCode
+      //   if (!payload.appIntegrity.certificateSha256Digest.includes(ANDROID_APP_CERT256)) throw new Error('APP_INTEGRITY_WRONG_DIGEST');
+      //   // Don't check for now tokenPayload.appIntegrity.versionCode
 
-        logger.debug(JSON.stringify({ socket: socket.id, message: "Host Token OK: " + device + "\n" + JSON.stringify(payload) }));
+      //   logger.debug(JSON.stringify({ socket: socket.id, message: "Host Token OK: " + device + "\n" + JSON.stringify(payload) }));
 
-        // accountDetails 
-        // Don't check for now
-      } catch (error) {
-        logger.error(JSON.stringify({ socket: socket.id, error: `ERROR:TOKEN_VERIFICATION_FAILED:${error.message}`, message: "Host Token ERROR: " + device + "\n" + JSON.stringify(payload) }));
-      }
-
+      //   // accountDetails 
+      //   // Don't check for now
+      // } catch (error) {
+      //   logger.error(JSON.stringify({ socket: socket.id, error: `ERROR:TOKEN_VERIFICATION_FAILED:${error.message}`, message: "Host Token ERROR: " + device + "\n" + JSON.stringify(payload) }));
+      // }
       socket.data.isHost = true;
       socket.data.isClient = false;
       clearTimeout(timeoutId);
@@ -127,7 +126,7 @@ export default async function (socket, next) {
     }
 
   } catch (cause) {
-    logger.warn(JSON.stringify({ socket: socket.id, error: 'ERROR:TOKEN_VERIFICATION_FAILED', message: cause.message }));
+    console.warn(`ERROR:TOKEN_VERIFICATION_FAILED:${cause.message}`);
     clearTimeout(timeoutId);
     next(new Error(`ERROR:TOKEN_VERIFICATION_FAILED:${cause.message}`));
   }

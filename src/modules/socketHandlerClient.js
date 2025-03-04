@@ -12,14 +12,14 @@ export default function (io, socket) {
         const event = '[STREAM:JOIN]';
 
         if (!socket.connected) {
-            logger.warn(JSON.stringify({ socket_event: event, socket: socket.id, message: 'Socket not connected. Ignoring.' }));
+            console.log('Socket not connected. Ignoring.');
             return;
         }
 
         logger.debug(JSON.stringify({ socket_event: event, socket: socket.id, clientId: socket.data.clientId, streamId: payload.streamId, payload, message: 'New stream join request' }));
 
         if (!payload || isStreamIdValid(payload.streamId) !== true || !payload.passwordHash) {
-            logger.warn(JSON.stringify({ socket_event: event, socket: socket.id, error: 'EMPTY_OR_BAD_DATA', message: 'Bad stream join request' }));
+            console.log('Bad stream join request. Ignoring.');
 
             socket.data.errorCounter += 1;
             callback({ status: 'ERROR:EMPTY_OR_BAD_DATA' });
@@ -28,7 +28,7 @@ export default function (io, socket) {
 
         const streamId = getStreamId(socket)
         if (streamId && streamId != payload.streamId) {
-            logger.warn(JSON.stringify({ socket_event: event, socket: socket.id, streamId: payload.streamId, clientId: socket.data.clientId, error: 'STREAM_ID_ALREADY_SET', message: `Stream id set to: ${streamId}` }));
+            console.log('Stream id already set. Ignoring.');
 
             socket.data.errorCounter += 1;
             callback({ status: 'ERROR:STREAM_ID_ALREADY_SET' });
@@ -38,23 +38,23 @@ export default function (io, socket) {
         const hostSocket = await getHostSocket(io, payload.streamId);
 
         if (!socket.connected) {
-            logger.warn(JSON.stringify({ socket_event: event, socket: socket.id, message: 'Socket not connected. Ignoring...' }));
+            console.log('Socket not connected. Ignoring.');
             return;
         }
 
         if (!hostSocket) {
-            logger.debug(JSON.stringify({ socket_event: event, socket: socket.id, streamId: payload.streamId, clientId: socket.data.clientId, error: 'NO_STREAM_HOST_FOUND', message: 'No host for stream found' }));
+            console.log('No host for stream found. Ignoring.');
 
             socket.data.errorCounter += 1;
             callback({ status: 'ERROR:NO_STREAM_HOST_FOUND' });
             return;
         }
 
-        if (!hostSocket.connected) {
-            logger.warn(JSON.stringify({ socket_event: event, socket: socket.id, message: 'Host socket not connected. Ignoring.' }));
-            callback({ status: 'ERROR:HOST_SOCKET_DISCONNECTED' });
-            return;
-        }
+        // if (!hostSocket.connected) {
+        //     console.log('Host socket not connected. Ignoring.');
+        //     callback({ status: 'ERROR:HOST_SOCKET_DISCONNECTED' });
+        //     return;
+        // }
 
         // Disconnect all other sockets for this clientId
         const allSockets = await io.fetchSockets();
@@ -68,7 +68,7 @@ export default function (io, socket) {
                 }
             });
 
-        logger.debug(JSON.stringify({ socket_event: event, socket: socket.id, streamId: payload.streamId, clientId: socket.data.clientId, host_socket: hostSocket.id, message: 'Got new client. Sending to host' }));
+        console.log('Got new client. Sending to host');
 
         socket.removeAllListeners('CLIENT:ANSWER');
         socket.on('CLIENT:ANSWER', clientAnswer);
@@ -83,20 +83,20 @@ export default function (io, socket) {
 
         hostSocket.timeout(SOCKET_TIMEOUT).emit('STREAM:JOIN', { clientId: socket.data.clientId, passwordHash: payload.passwordHash, iceServers }, (err, response) => {
             if (err) {
-                logger.warn(JSON.stringify({ socket_event: event, socket: socket.id, error: 'TIMEOUT_OR_NO_RESPONSE', message: 'Host error for STREAM:JOIN => TIMEOUT_OR_NO_RESPONSE' }));
+                console.log('Host error for STREAM:JOIN => TIMEOUT_OR_NO_RESPONSE');
                 callback({ status: 'ERROR:TIMEOUT_OR_NO_RESPONSE' });
                 return;
             }
 
             if (!socket.connected) {
-                logger.debug(JSON.stringify({ socket_event: event, socket: socket.id, streamId: payload.streamId, host_socket: hostSocket.id, message: 'STREAM:JOIN: Client socket disconnected. Ignoring' }));
+                console.log('Client socket disconnected. Ignoring.');
                 return;
             }
 
-            logger.debug(JSON.stringify({ socket_event: event, socket: socket.id, streamId: payload.streamId, clientId: socket.data.clientId, host_socket: hostSocket.id, message: `STREAM:JOIN Host response: ${response.status}` }));
+            console.log('Host response for STREAM:JOIN =>', response.status);
 
             if (response.status !== 'OK') { // ERROR:EMPTY_OR_BAD_DATA, ERROR:WRONG_STREAM_PASSWORD
-                logger.warn(JSON.stringify({ socket_event: event, socket: socket.id, streamId: payload.streamId, clientId: socket.data.clientId, host_socket: hostSocket.id, error: response.status, message: `Host error for STREAM:JOIN => ${response.status}` }));
+                console.log('Host error for STREAM:JOIN =>', response.status);
 
                 socket.data.errorCounter += 1;
                 callback({ status: response.status });
@@ -129,7 +129,7 @@ export default function (io, socket) {
         }
 
         if (!payload || !payload.answer) {
-            logger.warn(JSON.stringify({ socket_event: event, socket: socket.id, streamId: streamId, payload, error: 'EMPTY_OR_BAD_DATA', message: 'Bad client answer request' }));
+            console.log('Bad client answer request. Ignoring.');
 
             socket.data.errorCounter += 1;
             callback({ status: 'ERROR:EMPTY_OR_BAD_DATA' });
@@ -200,7 +200,7 @@ export default function (io, socket) {
         }
 
         if (!payload || !payload.candidate) {
-            logger.warn(JSON.stringify({ socket_event: event, socket: socket.id, streamId, payload, error: 'EMPTY_OR_BAD_DATA', message: 'Bad client candidate request' }));
+            console.log('Bad client candidate request. Ignoring.');
 
             socket.data.errorCounter += 1;
             callback({ status: 'ERROR:EMPTY_OR_BAD_DATA' });

@@ -28,7 +28,7 @@ export async function getHostSocket(io, streamId) {
     while (retries < MAX_ROOM_FETCH_RETRIES) {
         try {
             const socketsInStream = await io.in(streamId).fetchSockets();
-            return socketsInStream.find(item => item.data?.isHost === true);
+            return socketsInStream[0];
         } catch (error) {
             retries++;
             if (retries === MAX_ROOM_FETCH_RETRIES) return null;

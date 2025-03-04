@@ -223,7 +223,7 @@ export default function (io, socket) {
         const event = '[HOST:OFFER]';
 
         if (!payload || !payload.clientId || !payload.offer) {
-            logger.warn(JSON.stringify({ socket_event: event, socket: socket.id, streamId: socket.data.streamId, payload, error: 'EMPTY_OR_BAD_DATA', message: 'Bad host offer request' }));
+            console.log('hostOffer--------------EMPTY_OR_BAD_DATA-------------------------------------------');
             callback({ status: 'ERROR:EMPTY_OR_BAD_DATA' });
             return;
         }
@@ -280,7 +280,7 @@ export default function (io, socket) {
         const event = '[HOST:CANDIDATE]';
 
         if (!payload || !payload.clientId || (!payload.candidate && !payload.candidates)) {
-            logger.warn(JSON.stringify({ socket_event: event, socket: socket.id, streamId: socket.data.streamId, payload, error: 'EMPTY_OR_BAD_DATA', message: 'Bad host candidates request' }));
+            console.log('hostCandidate--------------EMPTY_OR_BAD_DATA-------------------------------------------');
             callback({ status: 'ERROR:EMPTY_OR_BAD_DATA' });
             return;
         }
@@ -338,7 +338,7 @@ export default function (io, socket) {
         const event = '[REMOVE:CLIENT]';
 
         if (!payload || !payload.clientId || !Array.isArray(payload.clientId)) {
-            logger.warn(JSON.stringify({ socket_event: event, socket: socket.id, streamId: socket.data.streamId, payload, error: 'EMPTY_OR_BAD_DATA', message: 'Bad remove client request' }));
+            console.log('removeClient--------------EMPTY_OR_BAD_DATA-------------------------------------------');
             callback({ status: 'ERROR:EMPTY_OR_BAD_DATA' });
             return;
         }

@@ -1,5 +1,5 @@
-export const SERVER_ORIGIN = '192.168.20.135';
-export const PORT = 5000;
+export const SERVER_ORIGIN = 'localhost';
+export const PORT = 80;
 export const isPROD = false;
 export const TURNSTYLE_SITE_KEY = "0x4AAAAAAA_eBARb9L5VixBM";
 export const npm_package_version = "1.0.0";

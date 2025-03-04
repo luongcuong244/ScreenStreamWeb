@@ -165,32 +165,35 @@ export class WebRTC {
     }
 
     async joinStream(streamId, password, attempt = 0) {
+
+        console.log('Joining stream ----', streamId, password);
+
         this.streamState.error = null;
 
         if (!isStreamIdValid(streamId)) {
-            log('warn', `WebRTC.joinStream: Bad stream id: '${streamId}'`, { streamId });
+            console.log('Bad stream id');
             this.streamState.error = 'ERROR:WRONG_STREAM_ID';
             return;
         }
 
         if (!this.streamState.isSocketConnected) {
-            log('warn', 'WebRTC.joinStream: No socket connected');
+            console.log('No socket connected');
             this.streamState.error = 'WEBRTC_ERROR:NO_SOCKET_CONNECTED';
             return;
         }
 
         if (!this.socket) {
-            log('warn', 'WebRTC.joinStream: No socket available');
+            console.log('No socket available');
             this.streamState.error = 'WEBRTC_ERROR:NO_SOCKET_AVAILABLE';
             return;
         }
 
         if (this.streamState.isJoiningStream) {
-            log('info', 'WebRTC.joinStream: Already joining stream. Ignoring.');
+            console.log('Already joining stream');
             return;
         }
 
-        log('debug', `WebRTC.joinStream: ${streamId}. Attempt: ${attempt}`, { streamId });
+        console.log('Joining stream', streamId);
         this.streamState.isJoiningStream = true;
 
         try {
@@ -200,6 +203,8 @@ export class WebRTC {
             const passwordHash = btoa(String.fromCharCode(...hashArray))
                 .replace(/\+/g, '-')
                 .replace(/\//g, '_');
+
+            console.log('Joining stream', streamId, passwordHash);
 
             this.socket.timeout(5000).emit('STREAM:JOIN', { streamId, passwordHash }, (error, response) => {
                 this.streamState.isJoiningStream = false;
@@ -346,7 +351,7 @@ export class WebRTC {
         this.socket.on('HOST:CANDIDATE', (hostCandidates, callback) => {
             if (!hostCandidates || !hostCandidates.candidates) {
                 if (callback) callback({ status: 'ERROR:EMPTY_OR_BAD_DATA' });
-                log('warn', 'WebRTC.startStream: Error in host candidates', { socket_event: '[HOST:CANDIDATE]', error: 'ERROR:EMPTY_OR_BAD_DATA', hostCandidate: hostCandidates.candidates });
+                console.log('Error in host candidates', hostCandidates);
                 this.streamState.error = 'WEBRTC_ERROR:NEGOTIATION_ERROR:HOST_CANDIDATE';
                 return;
             }
@@ -367,7 +372,7 @@ export class WebRTC {
 
             if (!hostOffer || !hostOffer.offer) {
                 if (callback) callback({ status: 'ERROR:EMPTY_OR_BAD_DATA' });
-                log('warn', 'WebRTC.startStream: Error in host offer', { socket_event: '[HOST:OFFER]', error: 'ERROR:EMPTY_OR_BAD_DATA', offer: JSON.stringify(hostOffer) });
+                console.log('Error in host offer', hostOffer);
                 this.streamState.error = 'WEBRTC_ERROR:NEGOTIATION_ERROR:HOST_OFFER';
                 return;
             }

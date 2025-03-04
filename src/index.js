@@ -121,7 +121,7 @@ io.engine.on('connection_error', (err) => {
   logger.error(JSON.stringify({ socket_event: '[connection_error]', message: err.message }));
 });
 
-// io.use(socketAuth);
+io.use(socketAuth);
 
 io.on('connection', (socket) => {
   logger.debug(JSON.stringify({ socket_event: '[connection]', socket: socket.id, message: `New connection: isHost=${socket.data.isHost}, isClient=${socket.data.isClient}` }));
