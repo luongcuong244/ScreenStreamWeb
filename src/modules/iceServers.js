@@ -2,10 +2,8 @@ import logger from '../logger.js';
 import dgram from 'node:dgram';
 import { Buffer } from 'node:buffer';
 import { createHmac } from 'crypto';
+import { SERVER_ORIGIN, TURN2_SHARED_SECRET } from '../constant.js';
 
-const SERVER_ORIGIN = process.env.SERVER_ORIGIN;
-
-const TURN2_SHARED_SECRET = process.env.TURN2_SHARED_SECRET;
 const GOOGLE_STUN_SERVERS_ADDRESS = [
     'stun.l.google.com',
     'stun1.l.google.com',

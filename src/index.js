@@ -1,25 +1,24 @@
 import logger from './logger.js';
-import { readFileSync } from 'fs';
+import { readFileSync, readFile } from 'fs';
 import express from 'express';
 import { Server } from 'socket.io';
+import http from 'http';
+import path from 'path';
+import serveStatic from 'serve-static';
 
 import { nonceHandler } from './modules/nonceHandler.js';
 import socketAuth from './modules/socketAuth.js';
 import socketCheck from './modules/socketCheck.js';
 import socketHostHandler from './modules/socketHandlerHost.js';
 import socketHandlerClient from './modules/socketHandlerClient.js';
-
-const SERVER_ORIGIN = process.env.SERVER_ORIGIN;
-const PORT = process.env.PORT || 5000;
-
-const isPROD = SERVER_ORIGIN === 'screenstream.io';
+import { SERVER_ORIGIN, PORT, isPROD, TURNSTYLE_SITE_KEY, npm_package_version } from './constant.js';
 
 const index = readFileSync('src/client/index.html')
   .toString()
   .replace('$DD_SERVICE$', `WebClient${isPROD ? '-PROD' : '-DEV'}`)
   .replace('$DD_HANDLER$', isPROD ? '["http"]' : '["http", "console"]')
-  .replace('$PACKAGE_VERSION$', `'${process.env.npm_package_version}'`)
-  .replace('$TURNSTYLE_SITE_KEY$', process.env.TURNSTYLE_SITE_KEY);
+  .replace('$PACKAGE_VERSION$', `'${npm_package_version}'`)
+  .replace('$TURNSTYLE_SITE_KEY$', TURNSTYLE_SITE_KEY);
 
 const nocache = (_, res, next) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -85,18 +84,20 @@ const expressApp = express()
   .get('/app/nonce', nocache, nonceHandler)
   .get('/', revalidate, (req, res) => {
     if (req.hostname !== SERVER_ORIGIN) {
-      return res.redirect(301, `https://${SERVER_ORIGIN}`);
+      return res.redirect(301, `http://${SERVER_ORIGIN}:${PORT}`);
     }
     res.send(index);
   })
   .get('/*', (req, res) => res.sendStatus(404));
 
-const expressServer = expressApp.listen(PORT, () => {
+const httpServer = http.createServer(expressApp);
+
+httpServer.listen(PORT, () => {
   logger.warn(`Listening on ${PORT}`);
   console.warn(`Listening on ${PORT}`);
 });
 
-const io = new Server(expressServer, {
+const io = new Server(httpServer, {
   path: '/app/socket',
   transports: ['websocket'],
   cleanupEmptyChildNamespaces: true,
@@ -109,7 +110,7 @@ process.on('SIGTERM', () => {
   }, 10000);
 
   io.disconnectSockets(true);
-  expressServer.close(() => {
+  httpServer.close(() => {
     clearTimeout(forceClose);
     console.warn('HTTP server closed');
     process.exit(0);
@@ -120,7 +121,7 @@ io.engine.on('connection_error', (err) => {
   logger.error(JSON.stringify({ socket_event: '[connection_error]', message: err.message }));
 });
 
-io.use(socketAuth);
+// io.use(socketAuth);
 
 io.on('connection', (socket) => {
   logger.debug(JSON.stringify({ socket_event: '[connection]', socket: socket.id, message: `New connection: isHost=${socket.data.isHost}, isClient=${socket.data.isClient}` }));

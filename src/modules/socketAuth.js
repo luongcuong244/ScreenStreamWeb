@@ -2,14 +2,7 @@ import logger from '../logger.js';
 import https from 'https';
 import { isValidNonce } from './nonceHandler.js';
 import { GoogleToken } from 'gtoken';
-
-const ANDROID_APP_PACKAGE = process.env.ANDROID_APP_PACKAGE;
-const ANDROID_APP_CERT256 = process.env.ANDROID_APP_CERT256;
-const GOOGLE_SERVICE_ACCOUNT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-const GOOGLE_SERVICE_ACCOUNT_KEY = process.env.GOOGLE_SERVICE_ACCOUNT_KEY.split('\\n').join('\n');
-
-const SERVER_ORIGIN = process.env.SERVER_ORIGIN;
-const TURNSTYLE_SECRET_KEY = process.env.TURNSTYLE_SECRET_KEY;
+import { ANDROID_APP_CERT256, ANDROID_APP_PACKAGE, GOOGLE_SERVICE_ACCOUNT_EMAIL, TURNSTYLE_SECRET_KEY, GOOGLE_SERVICE_ACCOUNT_KEY } from '../constant.js';
 
 const HOST_TOKEN_TIMEOUT = 60 * 60 * 1000; // 60 minutes
 
@@ -51,7 +44,7 @@ export default async function (socket, next) {
       const outcome = await doRequest(options, data);
 
       if (outcome.success !== true) throw new Error(`TURNSTYLE_INVALID_TOKEN:${outcome['error-codes']}`);
-      if (outcome.hostname !== SERVER_ORIGIN) throw new Error(`TURNSTYLE_INVALID_HOSTNAME:${outcome.hostname}`);
+      // if (outcome.hostname !== SERVER_ORIGIN) throw new Error(`TURNSTYLE_INVALID_HOSTNAME:${outcome.hostname}`);
       if (!outcome.cdata || typeof outcome.cdata !== 'string' || outcome.cdata.length === 0) throw new Error(`TURNSTYLE_INVALID_CLIENT_ID:${outcome.cdata}`);
 
       socket.data.isHost = false;

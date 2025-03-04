@@ -1,8 +1,8 @@
 import winston from 'winston';
 import DatadogWinston from 'datadog-winston';
 
-const DD_API_KEY = process.env.DD_API_KEY;
-const APP_NAME = process.env.APP_NAME;
+const DD_API_KEY = "process.env.DD_API_KEY";
+const APP_NAME = "my_machine";
 
 const logger = winston.createLogger({
     level: 'debug',
@@ -10,13 +10,13 @@ const logger = winston.createLogger({
     format: winston.format.json(),
 });
 
-logger.add(
-    new DatadogWinston({
-        apiKey: DD_API_KEY,
-        hostname: APP_NAME,
-        service: APP_NAME,
-        ddsource: 'nodejs',
-    })
-);
+// logger.add(
+//     new DatadogWinston({
+//         apiKey: DD_API_KEY,
+//         hostname: APP_NAME,
+//         service: APP_NAME,
+//         ddsource: 'nodejs',
+//     })
+// );
 
 export default logger;

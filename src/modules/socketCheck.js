@@ -15,10 +15,10 @@ export default function (io, socket) {
                 throw new Error('PAYLOAD_TOO_LARGE');
             }
 
-            if (!socket.data || (socket.data.isClient !== true && socket.data.isHost !== true)) {
-                logger.error(JSON.stringify({ socket_event: `[${event}]`, socket: socket.id, error: 'UNVERIFIED_SOCKET', message: "Unverified socket. Disconnecting" }));
-                throw new Error('UNVERIFIED_SOCKET');
-            }
+            // if (!socket.data || (socket.data.isClient !== true && socket.data.isHost !== true)) {
+            //     logger.error(JSON.stringify({ socket_event: `[${event}]`, socket: socket.id, error: 'UNVERIFIED_SOCKET', message: "Unverified socket. Disconnecting" }));
+            //     throw new Error('UNVERIFIED_SOCKET');
+            // }
 
             if (socket.data.isClient === true && socket.data.isHost === true) {
                 logger.error(JSON.stringify({ socket_event: `[${event}]`, socket: socket.id, error: 'INVALID_SOCKET_STATE', message: "Socket is host and client. Disconnecting" }));

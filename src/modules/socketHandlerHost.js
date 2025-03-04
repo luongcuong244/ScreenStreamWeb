@@ -1,9 +1,8 @@
 import logger from '../logger.js';
 import * as jose from 'jose';
 import { isStreamIdValid, createNewStreamId } from './stream.js';
+import { SERVER_ORIGIN, ANDROID_APP_PACKAGE } from '../constant.js';
 
-const SERVER_ORIGIN = process.env.SERVER_ORIGIN;
-const ANDROID_APP_PACKAGE = process.env.ANDROID_APP_PACKAGE;
 const SOCKET_TIMEOUT = 15000; // Untill Android app updates
 
 export default function (io, socket) {
@@ -13,10 +12,10 @@ export default function (io, socket) {
     const createStream = async (payload, callback) => {
         const event = '[STREAM:CREATE]';
 
-        logger.debug(JSON.stringify({ socket_event: event, socket: socket.id, payload, message: 'New stream create request' }));
+        console.log('createStr--------------ds-ds-ds-d-------------------------------------------');
 
         if (socket.data.handshakeInProgress) {
-            logger.warn(JSON.stringify({ socket_event: event, socket: socket.id, error: 'HANDSHAKE_IN_PROGRESS' }));
+            console.log('createStream--------------HANDSHAKE_IN_PROGRESS-------------------------------------------');
             return callback({ status: 'ERROR:HANDSHAKE_IN_PROGRESS' });
         }
 
@@ -24,42 +23,42 @@ export default function (io, socket) {
             socket.data.handshakeInProgress = true;
 
             if (!payload || !payload.jwt) {
-                logger.warn(JSON.stringify({ socket_event: event, socket: socket.id, error: 'NO_JWT_SET', message: 'Bad stream create request' }));
+                console.log('createStream--------------NO_JWT_SET-------------------------------------------');
                 callback({ status: 'ERROR:NO_JWT_SET' });
                 return;
             }
 
             if (socket.data.streamId) {
-                logger.warn(JSON.stringify({ socket_event: event, socket: socket.id, error: 'STREAM_ID_ALREADY_SET', message: 'Bad stream state' }));
+                console.log('createStream--------------STREAM_ID_ALREADY_SET-------------------------------------------');
                 callback({ status: 'ERROR:STREAM_ID_ALREADY_SET' });
                 return;
             }
 
-            let pubKey;
-            let requestedStreamId;
-            try {
-                const claims = jose.decodeJwt(payload.jwt);
-                if (!claims || typeof claims !== 'object') throw new Error('INVALID_JWT_FORMAT');
+            // let pubKey;
+            let requestedStreamId = "";
+            // try {
+            //     const claims = jose.decodeJwt(payload.jwt);
+            //     if (!claims || typeof claims !== 'object') throw new Error('INVALID_JWT_FORMAT');
 
-                const pubKeyStr = claims.pubKey;
-                if (typeof pubKeyStr !== 'string') throw new Error('INVALID_PUBKEY_FORMAT');
+            //     const pubKeyStr = claims.pubKey;
+            //     if (typeof pubKeyStr !== 'string') throw new Error('INVALID_PUBKEY_FORMAT');
 
-                const ecPublicKey = await jose.importSPKI(pubKeyStr, 'ES256');
-                const verifyResult = await jose.jwtVerify(payload.jwt, ecPublicKey, { audience: SERVER_ORIGIN, issuer: ANDROID_APP_PACKAGE });
+            //     const ecPublicKey = await jose.importSPKI(pubKeyStr, 'ES256');
+            //     const verifyResult = await jose.jwtVerify(payload.jwt, ecPublicKey, { audience: SERVER_ORIGIN, issuer: ANDROID_APP_PACKAGE });
 
-                if ('streamId' in verifyResult.payload) {
-                    if (typeof verifyResult.payload.streamId !== 'string') throw new Error('BAD_STREAM_ID1');
-                    requestedStreamId = verifyResult.payload.streamId.trim();
-                    if (!isStreamIdValid(requestedStreamId)) throw new Error('BAD_STREAM_ID2');
-                }
+            //     if ('streamId' in verifyResult.payload) {
+            //         if (typeof verifyResult.payload.streamId !== 'string') throw new Error('BAD_STREAM_ID1');
+            //         requestedStreamId = verifyResult.payload.streamId.trim();
+            //         if (!isStreamIdValid(requestedStreamId)) throw new Error('BAD_STREAM_ID2');
+            //     }
 
-                if (!verifyResult.payload.pubKey || typeof verifyResult.payload.pubKey !== 'string' || verifyResult.payload.pubKey.trim().length === 0) throw new Error('BAD_PUB_KEY');
-                pubKey = verifyResult.payload.pubKey;
-            } catch (cause) {
-                logger.warn(JSON.stringify({ socket_event: event, socket: socket.id, error: 'JWT_VERIFICATION_FILED', message: cause.message, cause }));
-                callback({ status: 'ERROR:JWT_VERIFICATION_FILED' });
-                return;
-            }
+            //     if (!verifyResult.payload.pubKey || typeof verifyResult.payload.pubKey !== 'string' || verifyResult.payload.pubKey.trim().length === 0) throw new Error('BAD_PUB_KEY');
+            //     pubKey = verifyResult.payload.pubKey;
+            // } catch (cause) {
+            //     console.log('createStream--------------JWT_VERIFICATION_FILED-------------------------------------------');
+            //     callback({ status: 'ERROR:JWT_VERIFICATION_FILED' });
+            //     return;
+            // }
 
             let streamId;
             if (requestedStreamId) {
@@ -67,16 +66,17 @@ export default function (io, socket) {
                 const existingHostSockets = socketsInRequestedStream.filter(item => item.data && item.data.isHost === true);
 
                 if (existingHostSockets.length > 1) { // This is very bad
-                    logger.warn(JSON.stringify({ socket_event: event, socket: socket.id, error: 'TOO_MANY_HOSTS', message: `TOO_MANY_HOSTS: ${existingHostSockets.map(s => s.id)}` }));
+                    console.log('createStream--------------TOO_MANY_HOSTS-------------------------------------------');
                     streamId = createNewStreamId(io);
                 } else if (existingHostSockets.length === 1) {
-                    if (existingHostSockets[0].data.pubKey === pubKey) {
-                        streamId = requestedStreamId;
-                        logger.warn(JSON.stringify({ socket_event: event, socket: socket.id, streamId, message: `Disconnecting previous host socket: ${existingHostSockets[0].id}` }));
-                        existingHostSockets[0].disconnect();
-                    } else {
-                        streamId = createNewStreamId(io);
-                    }
+                    // if (existingHostSockets[0].data.pubKey === pubKey) {
+                    //     streamId = requestedStreamId;
+                    //     console.log('createStream--------------DISCONNECTING_PREVIOUS_HOST-------------------------------------------');
+                    //     existingHostSockets[0].disconnect();
+                    // } else {
+                    //     streamId = createNewStreamId(io);
+                    // }
+                    streamId = createNewStreamId(io);
                 } else if (existingHostSockets.length === 0) {
                     streamId = requestedStreamId;
                 }
@@ -85,11 +85,11 @@ export default function (io, socket) {
             }
 
             if (!socket.connected) {
-                logger.warn(JSON.stringify({ socket_event: event, socket: socket.id, message: 'Socket not connected. Ignoring.' }));
+                console.log('createStream--------------SOCKET_NOT_CONNECTED-------------------------------------------');
                 return;
             }
 
-            logger.debug(JSON.stringify({ socket_event: event, socket: socket.id, streamId, message: `Set as host for stream: ${streamId}` }));
+            console.log('createStream--------------Set as host for stream-------------------------------------------');
 
             socket.removeAllListeners('STREAM:REMOVE');
             socket.on('STREAM:REMOVE', removeStream);
@@ -110,7 +110,7 @@ export default function (io, socket) {
             socket.on('REMOVE:CLIENT', removeClient);
 
             socket.data.streamId = streamId;
-            socket.data.pubKey = pubKey;
+            // socket.data.pubKey = pubKey;
             socket.join(streamId);
 
             callback({ status: 'OK', streamId });
