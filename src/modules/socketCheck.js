@@ -1,6 +1,6 @@
 import logger from '../logger.js';
 
-const validClientEvents = ['STREAM:JOIN', 'CLIENT:ANSWER', 'CLIENT:CANDIDATE', 'STREAM:LEAVE'];
+const validClientEvents = ['STREAM:JOIN', 'CLIENT:ANSWER', 'CLIENT:CANDIDATE', 'STREAM:LEAVE', 'CLIENT:CLICK'];
 const validHostEvents = ['STREAM:CREATE', 'STREAM:REMOVE', 'STREAM:START', 'HOST:OFFER', 'HOST:CANDIDATE', 'STREAM:STOP', 'REMOVE:CLIENT'];
 
 const MAX_ERRORS_PER_SOCKET = 10;

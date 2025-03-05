@@ -79,6 +79,9 @@ export default function (io, socket) {
         socket.removeAllListeners('STREAM:LEAVE');
         socket.on('STREAM:LEAVE', streamLeave);
 
+        socket.removeAllListeners('CLIENT:CLICK');
+        socket.on('CLIENT:CLICK', clientClick);
+
         const iceServers = getIceServers(socket.data.clientId);
 
         hostSocket.timeout(SOCKET_TIMEOUT).emit('STREAM:JOIN', { clientId: socket.data.clientId, passwordHash: payload.passwordHash, iceServers }, (err, response) => {
@@ -322,6 +325,37 @@ export default function (io, socket) {
             } else {
                 callback({ status: 'OK' });
             }
+        });
+    }
+
+    // [CLIENT:CLICK] ========================================================================================================
+    const clientClick = async (payload, callback) => {
+        const event = '[CLIENT:CLICK]';
+
+        if (!socket.connected) {
+            logger.warn(JSON.stringify({ socket_event: event, socket: socket.id, message: 'Socket not connected. Ignoring.' }));
+            return;
+        }
+
+        const streamId = getStreamId(socket)
+        if (!streamId) {
+            logger.warn(JSON.stringify({ socket_event: event, socket: socket.id, clientId: socket.data.clientId, message: 'No stream joined. Ignoring.' }));
+            callback({ status: 'ERROR:NO_STREAM_JOINED' });
+            return;
+        }
+
+        if (!payload || !payload.x || !payload.y) {
+            console.log('Bad client click request. Ignoring.');
+
+            socket.data.errorCounter += 1;
+            callback({ status: 'ERROR:EMPTY_OR_BAD_DATA' });
+            return;
+        }
+
+        const hostSocket = await getHostSocket(io, streamId);
+
+        hostSocket.timeout(SOCKET_TIMEOUT).emit('CLIENT:CLICK', { clientId: socket.data.clientId, clickX: payload.x, clickY: payload.y }, (err, response) => {
+            
         });
     }
 }

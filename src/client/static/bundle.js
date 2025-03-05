@@ -775,6 +775,36 @@ var WebRTC = /*#__PURE__*/function () {
       this.streamState.streamId = null;
       this.streamPassword = null;
     }
+  }, {
+    key: "sendClickEvent",
+    value: function sendClickEvent(x, y) {
+      console.log('sendClickEvent; x: ', x, ';y: ', y);
+      var _this6 = this;
+      webrtc_log('debug', 'WebRTC.sendClickEvent');
+      if (!this.socket) {
+        webrtc_log('warn', 'WebRTC.sendClickEvent: No socket connected');
+        return;
+      }
+      this.socket.timeout(5000).emit('CLIENT:CLICK', {
+        x: x,
+        y: y,
+      },function (error, response) {
+        // if (error) {
+        //   webrtc_log('debug', "WebRTC.sendClickEvent: [CLIENT:CLICK] timeout: ".concat(error));
+        //   _this6.streamState.error = 'ERROR:TIMEOUT:CLIENT:CLICK';
+        // } else if (!response || response.status !== 'OK') {
+        //   webrtc_log('warn', "WebRTC.sendClickEvent: Error: ".concat(JSON.stringify(response)), {
+        //     socket_event: '[CLIENT:CLICK]',
+        //     error: response
+        //   });
+        //   _this6.streamState.error = 'WEBRTC_ERROR:CLIENT_CLICK';
+        // } else {
+        //   webrtc_log('debug', 'WebRTC.sendClickEvent: [CLIENT:CLICK] send OK', {
+        //     socket_event: '[CLIENT:CLICK]'
+        //   });
+        // }
+      });
+    }
   }]);
 }();
 ;// ./src/client/static/src/main.js
@@ -987,6 +1017,9 @@ window.onloadTurnstileCallback = function () {
 };
 window.addEventListener('beforeunload', function () {
   webRTC.leaveStream(false);
+});
+UIElements.videoContainer.addEventListener('click', function (e) {
+  webRTC.sendClickEvent(10, 11);
 });
 function generateRandomString(length) {
   var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
