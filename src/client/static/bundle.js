@@ -1019,7 +1019,30 @@ window.addEventListener('beforeunload', function () {
   webRTC.leaveStream(false);
 });
 UIElements.videoContainer.addEventListener('click', function (e) {
-  webRTC.sendClickEvent(10, 11);
+  // show cords
+  var x = e.clientX;
+  var y = e.clientY;
+  console.log('x: ', x, ';y: ', y);
+  var videoWidth = UIElements.videoElement.offsetWidth;
+  var videoHeight = UIElements.videoElement.offsetHeight;
+  console.log('videoWidth: ', videoWidth, ';videoHeight: ', videoHeight);
+
+  var fullScreenDeviceWidth = 1080;
+  var fullScreenDeviceHeight = 2340;
+  var statusBarDeviceHeight = 83;
+  var navigationBarDeviceHeight = 126;
+
+  var displayDeviceWidth = fullScreenDeviceWidth / fullScreenDeviceHeight * videoHeight;
+  var displayDeviceHeight = videoHeight;
+
+  var xOnDisplayDevice = x - (videoWidth - displayDeviceWidth) / 2;
+  var yOnDisplayDevice = y - statusBarDeviceHeight;
+
+  var xOnDevice = xOnDisplayDevice / displayDeviceWidth * fullScreenDeviceWidth;
+  var yOnDevice = (yOnDisplayDevice / displayDeviceHeight * fullScreenDeviceHeight) - statusBarDeviceHeight;
+  console.log('xOnDevice: ', xOnDevice, ';yOnDevice: ', yOnDevice);
+
+  webRTC.sendClickEvent(Math.round(xOnDevice), Math.round(yOnDevice));
 });
 function generateRandomString(length) {
   var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
