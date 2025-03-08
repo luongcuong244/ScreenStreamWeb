@@ -1,22 +1,12 @@
-import { Locales } from './locales.js';
 import { isStreamIdValid, isStreamPasswordValid, WebRTC } from './webrtc.js';
 
 function log(level, message, context = {}) {
-    if (window.DD_LOGS && DD_LOGS.logger) {
-        DD_LOGS.logger[level](message, context);
-    } else {
-        console[level](message, context);
-    }
+    console.log(`[${level}] ${message}`, context);
 }
 
 const clientId = generateRandomString(24);
 const crc = ('00000000' + CRC32(clientId).toString(16).toUpperCase()).slice(-8);
 const publicId = crc.substring(0, 4) + "-" + crc.substring(4);
-
-if (window.DD_LOGS && DD_LOGS.setGlobalContextProperty) {
-    DD_LOGS.setGlobalContextProperty('clientId', clientId);
-    DD_LOGS.setGlobalContextProperty('publicId', publicId);
-}
 
 const UIElements = {
     startContainer: document.getElementById('start-container'),
@@ -72,29 +62,20 @@ const checkWebRTCSupport = () => {
     }
 };
 
-const supportedLocales = ['zh-TW', 'ar', 'de', 'en', 'es', 'fr', 'hi', 'it', 'ja', 'ko', 'nl', 'pl', 'pt', 'ru', 'tr', 'uk', 'zh'];
-const locales = new Locales(supportedLocales, navigator.languages);
-log('debug', `Browser locales: [${navigator.languages}], using locale: ${locales.selectedLocale}`);
+const initialize = () => {
+    setDataFromUrlParams();
+    checkWebRTCSupport();
+};
 
-locales.fetchTranslation().then(() => {
-    const initialize = () => {
-        locales.translateDocument();
-        setDataFromUrlParams();
-        checkWebRTCSupport();
-    };
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initialize);
-    } else {
-        initialize();
-    }
-}).catch(error => {
-    log('warn', `Error fetching translations: ${error.message}`, { error });
-});
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initialize);
+} else {
+    initialize();
+}
 
 try {
     document.getElementById('client-id').innerText = publicId;
-    const s = (locales.getTranslationByKey('client-id') || 'Client id:') + ' ' + publicId;
+    const s = 'Client id: ' + publicId;
     document.getElementById('streaming-client-id').innerText = s;
     document.getElementById('stream-wait-client-id').innerText = s;
 } catch (error) {
@@ -124,18 +105,6 @@ const onNewState = (key, oldValue, newValue, state) => {
         log('warn', `onNewState.error: ${state.error}`, { error: state.error });
     }
 
-    if (key === 'streamId') {
-        if (state.streamId) {
-            if (window.DD_LOGS && DD_LOGS.setGlobalContextProperty) {
-                DD_LOGS.setGlobalContextProperty('streamId', state.streamId);
-            }
-        } else {
-            if (window.DD_LOGS && DD_LOGS.removeGlobalContextProperty) {
-                DD_LOGS.removeGlobalContextProperty('streamId');
-            }
-        }
-    }
-
     UIElements.startContainer.style.display = (!state.isStreamJoined) ? 'block' : 'none';
     UIElements.streamWaitContainer.style.display = (state.isStreamJoined && !state.isStreamRunning) ? 'block' : 'none';
     UIElements.streamingHeader.style.display = (state.isStreamRunning) ? 'block' : 'none';
@@ -150,22 +119,22 @@ const onNewState = (key, oldValue, newValue, state) => {
     if (state.error) {
         switch (state.error) {
             case 'ERROR:TURNSTILE:200100':
-                UIElements.streamErrorCell.innerText = locales.getTranslationByKey(state.error) || 'Incorrect device clock time. Please adjust and reload the page.';
+                UIElements.streamErrorCell.innerText = 'Incorrect device clock time. Please adjust and reload the page.';
                 UIElements.streamJoinCell.style.display = 'none';
                 UIElements.streamJoinButton.style.display = 'none';
                 UIElements.joinButtonLoader.style.display = 'none';
                 break;
             case 'ERROR:WRONG_STREAM_ID':
-                UIElements.streamErrorCell.innerText = locales.getTranslationByKey(state.error) || 'Wrong stream id';
+                UIElements.streamErrorCell.innerText = 'Wrong stream id';
                 break;
             case 'ERROR:NO_STREAM_HOST_FOUND':
-                UIElements.streamErrorCell.innerText = locales.getTranslationByKey(state.error) || 'Stream not found';
+                UIElements.streamErrorCell.innerText = 'Stream not found';
                 break;
             case 'ERROR:WRONG_STREAM_PASSWORD':
-                UIElements.streamErrorCell.innerText = locales.getTranslationByKey(state.error) || 'Wrong stream password';
+                UIElements.streamErrorCell.innerText = 'Wrong stream password';
                 break;
             default:
-                UIElements.streamErrorCell.innerText = (locales.getTranslationByKey('ERROR:UNSPECIFIED') || 'Something went wrong. Reload this page and try again.') + `\n[${state.error}]\n\n`;
+                UIElements.streamErrorCell.innerText = 'Something went wrong. Reload this page and try again.' + `\n[${state.error}]\n\n`;
                 UIElements.streamJoinCell.style.display = 'none';
                 UIElements.streamJoinButton.style.display = 'none';
                 UIElements.joinButtonLoader.style.display = 'none';
@@ -174,9 +143,9 @@ const onNewState = (key, oldValue, newValue, state) => {
     }
 
     if (key === 'isStreamJoined' && state.isStreamJoined) {
-        UIElements.streamWaitStreamId.innerText = (locales.getTranslationByKey(UIElements.streamWaitStreamId.getAttribute('data-i18n-key')) || 'Stream Id: {streamId}').replace('{streamId}', state.streamId);
+        UIElements.streamWaitStreamId.innerText = 'Stream Id: {streamId}'.replace('{streamId}', state.streamId);
 
-        UIElements.streamingContainerText.innerText = (locales.getTranslationByKey(UIElements.streamingContainerText.getAttribute('data-i18n-key')) || 'Stream Id: {streamId}').replace('{streamId}', state.streamId);
+        UIElements.streamingContainerText.innerText = 'Stream Id: {streamId}'.replace('{streamId}', state.streamId);
     }
 
     if (key === 'isStreamRunning') {
@@ -245,8 +214,6 @@ UIElements.videoContainer.addEventListener('click', function (e) {
 
     var fullScreenDeviceWidth = 1080;
     var fullScreenDeviceHeight = 2340;
-    var statusBarDeviceHeight = 83;
-    var navigationBarDeviceHeight = 126;
 
     var displayDeviceWidth = fullScreenDeviceWidth / fullScreenDeviceHeight * videoHeight;
     var displayDeviceHeight = videoHeight;
@@ -256,7 +223,7 @@ UIElements.videoContainer.addEventListener('click', function (e) {
 
     var xOnDevice = xOnDisplayDevice / displayDeviceWidth * fullScreenDeviceWidth;
     var yOnDevice = yOnDisplayDevice / displayDeviceHeight * fullScreenDeviceHeight;
-    console.log('xOnDevice: ', xOnDevice, ';yOnDevice: ', yOnDevice);
+    console.log('xOnDevice: ', xOnDevice, ';yOnDevice: ', yOnDevice);  
 
     webRTC.sendClickEvent(Math.round(xOnDevice), Math.round(yOnDevice));
 });
