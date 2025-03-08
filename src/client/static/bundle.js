@@ -29,11 +29,7 @@ function getDefaultIceServers() {
 }
 function log(level, message) {
   var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-  if (window.DD_LOGS && DD_LOGS.logger) {
-    DD_LOGS.logger[level](message, context);
-  } else {
-    console[level](message, context);
-  }
+  console.log("[".concat(level, "] ").concat(message), context);
 }
 var WebRTC = /*#__PURE__*/function () {
   function WebRTC(clientId, streamState, getTurnstileTokenAsync, onNewTrack) {
@@ -165,18 +161,12 @@ var WebRTC = /*#__PURE__*/function () {
       });
       this.socket.on('connect', function () {
         log('debug', 'WebRTC.connectSocket: connect');
-        if (window.DD_LOGS && DD_LOGS.setGlobalContextProperty) {
-          DD_LOGS.setGlobalContextProperty('socket', _this2.socket.id);
-        }
         _this2.socketReconnectCounter = 0;
         _this2.streamState.isSocketConnected = true;
         _this2.streamState.isTokenAvailable = false;
       });
       this.socket.on('disconnect', function (reason) {
         log('debug', "WebRTC.connectSocket: [disconnect] => ".concat(reason));
-        if (window.DD_LOGS && DD_LOGS.removeGlobalContextProperty) {
-          DD_LOGS.removeGlobalContextProperty('socket');
-        }
         _this2.cleanupSocket();
         if (_this2.socketReconnectCounter >= 10) {
           log('warn', "WebRTC.connectSocket: failed after [".concat(_this2.socketReconnectCounter, "] attempts. Giving up."));

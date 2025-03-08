@@ -17,11 +17,7 @@ function getDefaultIceServers() {
 }
 
 function log(level, message, context = {}) {
-    if (window.DD_LOGS && DD_LOGS.logger) {
-        DD_LOGS.logger[level](message, context);
-    } else {
-        console[level](message, context);
-    }
+    console.log(`[${level}] ${message}`, context);
 }
 
 export class WebRTC {
@@ -100,9 +96,6 @@ export class WebRTC {
 
         this.socket.on('connect', () => {
             log('debug', 'WebRTC.connectSocket: connect');
-            if (window.DD_LOGS && DD_LOGS.setGlobalContextProperty) {
-                DD_LOGS.setGlobalContextProperty('socket', this.socket.id);
-            }
 
             this.socketReconnectCounter = 0;
 
@@ -112,10 +105,7 @@ export class WebRTC {
 
         this.socket.on('disconnect', (reason) => {
             log('debug', `WebRTC.connectSocket: [disconnect] => ${reason}`);
-            if (window.DD_LOGS && DD_LOGS.removeGlobalContextProperty) {
-                DD_LOGS.removeGlobalContextProperty('socket');
-            }
-
+            
             this.cleanupSocket();
 
             if (this.socketReconnectCounter >= 10) {
