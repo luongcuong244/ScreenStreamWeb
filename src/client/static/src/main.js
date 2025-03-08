@@ -195,9 +195,7 @@ UIElements.streamJoinButton.addEventListener('click', (e) => {
     webRTC.joinStream(UIElements.streamIdInput.value, UIElements.passwordInput.value);
 });
 
-window.onloadTurnstileCallback = () => {
-    webRTC.waitForServerOnlineAndConnect();
-};
+webRTC.waitForServerOnlineAndConnect();
 
 window.addEventListener('beforeunload', () => {
     webRTC.leaveStream(false);

@@ -82,7 +82,7 @@ var WebRTC = /*#__PURE__*/function () {
     value: function () {
       var _waitForServerOnlineAndConnect = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee2() {
         var _this = this;
-        var online, token;
+        var online;
         return _regeneratorRuntime().wrap(function _callee2$(_context2) {
           while (1) switch (_context2.prev = _context2.next) {
             case 0:
@@ -100,39 +100,25 @@ var WebRTC = /*#__PURE__*/function () {
             case 7:
               online = _context2.sent;
               this.streamState.isServerAvailable = online;
-              if (!online) {
-                _context2.next = 25;
-                break;
+              if (online) {
+                try {
+                  this.connectSocket();
+                } catch (error) {
+                  this.streamState.error = error;
+                } finally {
+                  this._isConnecting = false;
+                }
+              } else {
+                this._isConnecting = false;
+                setTimeout(function () {
+                  return _this.waitForServerOnlineAndConnect();
+                }, 3000);
               }
-              _context2.prev = 10;
-              _context2.next = 13;
-              return this.getTurnstileTokenAsync(this.clientId);
-            case 13:
-              token = _context2.sent;
-              this.connectSocket(token);
-              _context2.next = 20;
-              break;
-            case 17:
-              _context2.prev = 17;
-              _context2.t0 = _context2["catch"](10);
-              this.streamState.error = _context2.t0;
-            case 20:
-              _context2.prev = 20;
-              this._isConnecting = false;
-              return _context2.finish(20);
-            case 23:
-              _context2.next = 27;
-              break;
-            case 25:
-              this._isConnecting = false;
-              setTimeout(function () {
-                return _this.waitForServerOnlineAndConnect();
-              }, 3000);
-            case 27:
+            case 10:
             case "end":
               return _context2.stop();
           }
-        }, _callee2, this, [[10, 17, 20, 23]]);
+        }, _callee2, this);
       }));
       function waitForServerOnlineAndConnect() {
         return _waitForServerOnlineAndConnect.apply(this, arguments);
@@ -141,7 +127,7 @@ var WebRTC = /*#__PURE__*/function () {
     }()
   }, {
     key: "connectSocket",
-    value: function connectSocket(token) {
+    value: function connectSocket() {
       var _this2 = this;
       log('debug', 'WebRTC.connectSocket');
       this.streamState.isTokenAvailable = true;
@@ -155,7 +141,7 @@ var WebRTC = /*#__PURE__*/function () {
         path: '/app/socket',
         transports: ['websocket'],
         auth: {
-          clientToken: token
+          clientId: this.clientId
         },
         reconnection: false
       });
@@ -820,9 +806,7 @@ UIElements.streamJoinButton.addEventListener('click', function (e) {
   e.preventDefault();
   webRTC.joinStream(UIElements.streamIdInput.value, UIElements.passwordInput.value);
 });
-window.onloadTurnstileCallback = function () {
-  webRTC.waitForServerOnlineAndConnect();
-};
+webRTC.waitForServerOnlineAndConnect();
 window.addEventListener('beforeunload', function () {
   webRTC.leaveStream(false);
 });

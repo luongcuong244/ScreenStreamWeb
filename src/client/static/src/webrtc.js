@@ -62,8 +62,7 @@ export class WebRTC {
 
         if (online) {
             try {
-                const token = await this.getTurnstileTokenAsync(this.clientId);
-                this.connectSocket(token);
+                this.connectSocket();
             } catch (error) {
                 this.streamState.error = error;
             } finally {
@@ -75,7 +74,7 @@ export class WebRTC {
         }
     }
 
-    connectSocket(token) {
+    connectSocket() {
         log('debug', 'WebRTC.connectSocket');
         this.streamState.isTokenAvailable = true;
 
@@ -90,7 +89,7 @@ export class WebRTC {
         this.socket = io({
             path: '/app/socket',
             transports: ['websocket'],
-            auth: { clientToken: token },
+            auth: { clientId: this.clientId },
             reconnection: false,
         });
 
