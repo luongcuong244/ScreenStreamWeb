@@ -92,7 +92,13 @@ var Locales = /*#__PURE__*/function () {
   }, {
     key: "getTranslationByKey",
     value: function getTranslationByKey(key) {
-      return this.translations[key] || this.defaultTranslations[key];
+      if (this.translations[key]) {
+        return this.translations[key];
+      }
+      if (this.defaultTranslations[key]) {
+        return this.defaultTranslations[key];
+      }
+      return "[".concat(key, "]");
     }
   }, {
     key: "translateDocument",
@@ -185,6 +191,7 @@ var WebRTC = /*#__PURE__*/function () {
     this.peerConnection = null;
     this.hostOfferTimeout = null;
     this.iceServers = getDefaultIceServers();
+    this._isConnecting = false;
     webrtc_log('debug', 'WebRTC.constructor');
   }
   return webrtc_createClass(WebRTC, [{
@@ -227,39 +234,52 @@ var WebRTC = /*#__PURE__*/function () {
           while (1) switch (_context2.prev = _context2.next) {
             case 0:
               webrtc_log('debug', 'WebRTC.waitForServerOnlineAndConnect');
-              _context2.next = 3;
+              if (!this._isConnecting) {
+                _context2.next = 4;
+                break;
+              }
+              webrtc_log('warn', 'WebRTC.waitForServerOnlineAndConnect: Already connecting...');
+              return _context2.abrupt("return");
+            case 4:
+              this._isConnecting = true;
+              _context2.next = 7;
               return this.isServerOnlineAsync();
-            case 3:
+            case 7:
               online = _context2.sent;
               this.streamState.isServerAvailable = online;
               if (!online) {
-                _context2.next = 18;
+                _context2.next = 25;
                 break;
               }
-              _context2.prev = 6;
-              _context2.next = 9;
+              _context2.prev = 10;
+              _context2.next = 13;
               return this.getTurnstileTokenAsync(this.clientId);
-            case 9:
+            case 13:
               token = _context2.sent;
               this.connectSocket(token);
-              _context2.next = 16;
+              _context2.next = 20;
               break;
-            case 13:
-              _context2.prev = 13;
-              _context2.t0 = _context2["catch"](6);
+            case 17:
+              _context2.prev = 17;
+              _context2.t0 = _context2["catch"](10);
               this.streamState.error = _context2.t0;
-            case 16:
-              _context2.next = 19;
+            case 20:
+              _context2.prev = 20;
+              this._isConnecting = false;
+              return _context2.finish(20);
+            case 23:
+              _context2.next = 27;
               break;
-            case 18:
+            case 25:
+              this._isConnecting = false;
               setTimeout(function () {
                 return _this.waitForServerOnlineAndConnect();
               }, 3000);
-            case 19:
+            case 27:
             case "end":
               return _context2.stop();
           }
-        }, _callee2, this, [[6, 13]]);
+        }, _callee2, this, [[10, 17, 20, 23]]);
       }));
       function waitForServerOnlineAndConnect() {
         return _waitForServerOnlineAndConnect.apply(this, arguments);
@@ -319,7 +339,7 @@ var WebRTC = /*#__PURE__*/function () {
         //ERROR:TOKEN_VERIFICATION_FAILED:TURNSTYLE_INVALID_TOKEN:${outcome['error-codes']}
         //ERROR:TOKEN_VERIFICATION_FAILED:TURNSTYLE_INVALID_HOSTNAME:${outcome.hostname}
         //ERROR:TOKEN_VERIFICATION_FAILED:TURNSTYLE_INVALID_CLIENT_ID:${outcome.cdata}
-        _this2.streamState.error = error.message || 'WEBRTC_ERROR:CONNECT_ERROR'; // || 'WEBRTC_ERROR:CONNECT_ERROR'
+        _this2.streamState.error = error.message || 'WEBRTC_ERROR:CONNECT_ERROR';
       });
       this.socket.on('SOCKET:ERROR', function (error, callback) {
         webrtc_log('warn', "WebRTC.connectSocket: [SOCKET:ERROR]: ".concat(error.status), {
@@ -333,7 +353,7 @@ var WebRTC = /*#__PURE__*/function () {
         // SOCKET_CHECK_ERROR:ERROR_LIMIT_REACHED
         _this2.streamState.error = error.status;
 
-        // Server always disconnects socket on this event. To disable reconnect
+        // Server always disconnects socket on this event. 
         _this2.socketReconnectCounter = 5;
         if (callback) callback({
           status: 'OK'
@@ -366,52 +386,50 @@ var WebRTC = /*#__PURE__*/function () {
           while (1) switch (_context3.prev = _context3.next) {
             case 0:
               attempt = _args3.length > 2 && _args3[2] !== undefined ? _args3[2] : 0;
+              console.log('Joining stream ----', streamId, password);
               this.streamState.error = null;
               if (isStreamIdValid(streamId)) {
-                _context3.next = 6;
+                _context3.next = 7;
                 break;
               }
-              webrtc_log('warn', "WebRTC.joinStream: Bad stream id: '".concat(streamId, "'"), {
-                streamId: streamId
-              });
+              console.log('Bad stream id');
               this.streamState.error = 'ERROR:WRONG_STREAM_ID';
               return _context3.abrupt("return");
-            case 6:
+            case 7:
               if (this.streamState.isSocketConnected) {
-                _context3.next = 10;
+                _context3.next = 11;
                 break;
               }
-              webrtc_log('warn', 'WebRTC.joinStream: No socket connected');
+              console.log('No socket connected');
               this.streamState.error = 'WEBRTC_ERROR:NO_SOCKET_CONNECTED';
               return _context3.abrupt("return");
-            case 10:
+            case 11:
               if (this.socket) {
-                _context3.next = 14;
+                _context3.next = 15;
                 break;
               }
-              webrtc_log('warn', 'WebRTC.joinStream: No socket available');
+              console.log('No socket available');
               this.streamState.error = 'WEBRTC_ERROR:NO_SOCKET_AVAILABLE';
               return _context3.abrupt("return");
-            case 14:
+            case 15:
               if (!this.streamState.isJoiningStream) {
-                _context3.next = 17;
+                _context3.next = 18;
                 break;
               }
-              webrtc_log('info', 'WebRTC.joinStream: Already joining stream. Ignoring.');
+              console.log('Already joining stream');
               return _context3.abrupt("return");
-            case 17:
-              webrtc_log('debug', "WebRTC.joinStream: ".concat(streamId, ". Attempt: ").concat(attempt), {
-                streamId: streamId
-              });
+            case 18:
+              console.log('Joining stream', streamId);
               this.streamState.isJoiningStream = true;
-              _context3.prev = 19;
+              _context3.prev = 20;
               data = this.clientId + streamId + password;
-              _context3.next = 23;
+              _context3.next = 24;
               return window.crypto.subtle.digest('SHA-384', new TextEncoder().encode(data));
-            case 23:
+            case 24:
               hashBuffer = _context3.sent;
               hashArray = Array.from(new Uint8Array(hashBuffer));
               passwordHash = btoa(String.fromCharCode.apply(String, hashArray)).replace(/\+/g, '-').replace(/\//g, '_');
+              console.log('Joining stream', streamId, passwordHash);
               this.socket.timeout(5000).emit('STREAM:JOIN', {
                 streamId: streamId,
                 passwordHash: passwordHash
@@ -440,18 +458,18 @@ var WebRTC = /*#__PURE__*/function () {
                 _this3.iceServers = (_response$iceServers = response.iceServers) !== null && _response$iceServers !== void 0 && _response$iceServers.length ? response.iceServers : getDefaultIceServers();
                 _this3.setupSocketEventListeners(attempt);
               });
-              _context3.next = 33;
+              _context3.next = 35;
               break;
-            case 29:
-              _context3.prev = 29;
-              _context3.t0 = _context3["catch"](19);
+            case 31:
+              _context3.prev = 31;
+              _context3.t0 = _context3["catch"](20);
               this.streamState.isJoiningStream = false;
               this.streamState.error = _context3.t0;
-            case 33:
+            case 35:
             case "end":
               return _context3.stop();
           }
-        }, _callee3, this, [[19, 29]]);
+        }, _callee3, this, [[20, 31]]);
       }));
       function joinStream(_x, _x2) {
         return _joinStream.apply(this, arguments);
@@ -613,11 +631,7 @@ var WebRTC = /*#__PURE__*/function () {
                   if (callback) callback({
                     status: 'ERROR:EMPTY_OR_BAD_DATA'
                   });
-                  webrtc_log('warn', 'WebRTC.startStream: Error in host candidates', {
-                    socket_event: '[HOST:CANDIDATE]',
-                    error: 'ERROR:EMPTY_OR_BAD_DATA',
-                    hostCandidate: hostCandidates.candidates
-                  });
+                  console.log('Error in host candidates', hostCandidates);
                   _this5.streamState.error = 'WEBRTC_ERROR:NEGOTIATION_ERROR:HOST_CANDIDATE';
                   return;
                 }
@@ -651,11 +665,7 @@ var WebRTC = /*#__PURE__*/function () {
                         if (callback) callback({
                           status: 'ERROR:EMPTY_OR_BAD_DATA'
                         });
-                        webrtc_log('warn', 'WebRTC.startStream: Error in host offer', {
-                          socket_event: '[HOST:OFFER]',
-                          error: 'ERROR:EMPTY_OR_BAD_DATA',
-                          offer: JSON.stringify(hostOffer)
-                        });
+                        console.log('Error in host offer', hostOffer);
                         _this5.streamState.error = 'WEBRTC_ERROR:NEGOTIATION_ERROR:HOST_OFFER';
                         return _context5.abrupt("return");
                       case 7:
@@ -778,32 +788,13 @@ var WebRTC = /*#__PURE__*/function () {
   }, {
     key: "sendClickEvent",
     value: function sendClickEvent(x, y) {
-      console.log('sendClickEvent; x: ', x, ';y: ', y);
-      var _this6 = this;
-      webrtc_log('debug', 'WebRTC.sendClickEvent');
-      if (!this.socket) {
-        webrtc_log('warn', 'WebRTC.sendClickEvent: No socket connected');
-        return;
+      if (this.streamState.isStreamJoined && this.streamState.isStreamRunning && this.socket) {
+        var event = {
+          x: x,
+          y: y
+        };
+        this.socket.emit('CLIENT:CLICK', event);
       }
-      this.socket.timeout(5000).emit('CLIENT:CLICK', {
-        x: x,
-        y: y,
-      },function (error, response) {
-        // if (error) {
-        //   webrtc_log('debug', "WebRTC.sendClickEvent: [CLIENT:CLICK] timeout: ".concat(error));
-        //   _this6.streamState.error = 'ERROR:TIMEOUT:CLIENT:CLICK';
-        // } else if (!response || response.status !== 'OK') {
-        //   webrtc_log('warn', "WebRTC.sendClickEvent: Error: ".concat(JSON.stringify(response)), {
-        //     socket_event: '[CLIENT:CLICK]',
-        //     error: response
-        //   });
-        //   _this6.streamState.error = 'WEBRTC_ERROR:CLIENT_CLICK';
-        // } else {
-        //   webrtc_log('debug', 'WebRTC.sendClickEvent: [CLIENT:CLICK] send OK', {
-        //     socket_event: '[CLIENT:CLICK]'
-        //   });
-        // }
-      });
     }
   }]);
 }();
@@ -1026,22 +1017,17 @@ UIElements.videoContainer.addEventListener('click', function (e) {
   var videoWidth = UIElements.videoElement.offsetWidth;
   var videoHeight = UIElements.videoElement.offsetHeight;
   console.log('videoWidth: ', videoWidth, ';videoHeight: ', videoHeight);
-
   var fullScreenDeviceWidth = 1080;
   var fullScreenDeviceHeight = 2340;
   var statusBarDeviceHeight = 83;
   var navigationBarDeviceHeight = 126;
-
   var displayDeviceWidth = fullScreenDeviceWidth / fullScreenDeviceHeight * videoHeight;
   var displayDeviceHeight = videoHeight;
-
   var xOnDisplayDevice = x - (videoWidth - displayDeviceWidth) / 2;
-  var yOnDisplayDevice = y - statusBarDeviceHeight;
-
+  var yOnDisplayDevice = y;
   var xOnDevice = xOnDisplayDevice / displayDeviceWidth * fullScreenDeviceWidth;
-  var yOnDevice = (yOnDisplayDevice / displayDeviceHeight * fullScreenDeviceHeight) - statusBarDeviceHeight;
+  var yOnDevice = yOnDisplayDevice / displayDeviceHeight * fullScreenDeviceHeight;
   console.log('xOnDevice: ', xOnDevice, ';yOnDevice: ', yOnDevice);
-
   webRTC.sendClickEvent(Math.round(xOnDevice), Math.round(yOnDevice));
 });
 function generateRandomString(length) {

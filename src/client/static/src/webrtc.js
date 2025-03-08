@@ -446,4 +446,11 @@ export class WebRTC {
         this.streamState.streamId = null;
         this.streamPassword = null;
     }
+
+    sendClickEvent(x, y) {
+        if (this.streamState.isStreamJoined && this.streamState.isStreamRunning && this.socket) {
+            const event = { x, y };
+            this.socket.emit('CLIENT:CLICK', event);
+        }
+    }
 }
