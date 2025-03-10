@@ -441,4 +441,17 @@ export class WebRTC {
             this.socket.emit('CLIENT:CLICK', event);
         }
     }
+
+    sendSwipeEvent(touchStart, touchEnd, duration) {
+        if (this.streamState.isStreamJoined && this.streamState.isStreamRunning && this.socket) {
+            const event = { 
+                touchStartX: touchStart.x, 
+                touchStartY: touchStart.y,
+                touchEndX: touchEnd.x,
+                touchEndY: touchEnd.y,
+                duration
+            };
+            this.socket.emit('CLIENT:SWIPE', event);
+        }
+    }
 }

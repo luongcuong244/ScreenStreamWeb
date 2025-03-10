@@ -32,11 +32,10 @@ function log(level, message) {
   console.log("[".concat(level, "] ").concat(message), context);
 }
 var WebRTC = /*#__PURE__*/function () {
-  function WebRTC(clientId, streamState, getTurnstileTokenAsync, onNewTrack) {
+  function WebRTC(clientId, streamState, onNewTrack) {
     _classCallCheck(this, WebRTC);
     this.clientId = clientId;
     this.streamState = streamState;
-    this.getTurnstileTokenAsync = getTurnstileTokenAsync;
     this.onNewTrack = onNewTrack;
     this.socket = null;
     this.socketReconnectCounter = 0;
@@ -631,7 +630,114 @@ var WebRTC = /*#__PURE__*/function () {
     }
   }]);
 }();
+;// ./src/client/static/src/device.gesture.handler.js
+function device_gesture_handler_typeof(o) { "@babel/helpers - typeof"; return device_gesture_handler_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, device_gesture_handler_typeof(o); }
+function device_gesture_handler_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function device_gesture_handler_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, device_gesture_handler_toPropertyKey(o.key), o); } }
+function device_gesture_handler_createClass(e, r, t) { return r && device_gesture_handler_defineProperties(e.prototype, r), t && device_gesture_handler_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function device_gesture_handler_toPropertyKey(t) { var i = device_gesture_handler_toPrimitive(t, "string"); return "symbol" == device_gesture_handler_typeof(i) ? i : i + ""; }
+function device_gesture_handler_toPrimitive(t, r) { if ("object" != device_gesture_handler_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != device_gesture_handler_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+var DeviceGestureHandler = /*#__PURE__*/function () {
+  function DeviceGestureHandler(videoElement) {
+    device_gesture_handler_classCallCheck(this, DeviceGestureHandler);
+    this.videoElement = videoElement;
+    this.fullScreenDeviceWidth = 1080;
+    this.fullScreenDeviceHeight = 2340;
+    this.videoElement.addEventListener('click', this.handleClick.bind(this));
+    this.videoElement.addEventListener('touchstart', this.handleTouchStart.bind(this));
+    this.videoElement.addEventListener('touchend', this.handleTouchEnd.bind(this));
+    this.touchStartX = 0;
+    this.touchStartY = 0;
+    this.touchStartTime = 0;
+    this.swipeMaxDuration = 500; // Giới hạn thời gian vuốt (ms)
+  }
+  return device_gesture_handler_createClass(DeviceGestureHandler, [{
+    key: "setOnClick",
+    value: function setOnClick(onClick) {
+      this.onClick = onClick;
+    }
+  }, {
+    key: "setOnDoubleClick",
+    value: function setOnDoubleClick(onDoubleClick) {
+      this.onDoubleClick = onDoubleClick;
+    }
+  }, {
+    key: "setOnLongPress",
+    value: function setOnLongPress(onLongPress) {
+      this.onLongPress = onLongPress;
+    }
+  }, {
+    key: "setOnSwipe",
+    value: function setOnSwipe(onSwipe) {
+      this.onSwipe = onSwipe;
+    }
+  }, {
+    key: "handleClick",
+    value: function handleClick(e) {
+      var deviceCoordinate = this.webCordianteToDeviceCoordinate(e.clientX, e.clientY);
+      if (this.onClick) {
+        this.onClick(deviceCoordinate.x, deviceCoordinate.y);
+      }
+    }
+  }, {
+    key: "handleTouchStart",
+    value: function handleTouchStart(e) {
+      this.touchStartX = e.touches[0].clientX;
+      this.touchStartY = e.touches[0].clientY;
+      this.touchStartTime = Date.now(); // Ghi lại thời điểm bắt đầu chạm
+    }
+  }, {
+    key: "handleTouchEnd",
+    value: function handleTouchEnd(e) {
+      var touchEndX = e.changedTouches[0].clientX;
+      var touchEndY = e.changedTouches[0].clientY;
+      var touchDuration = Date.now() - this.touchStartTime; // Thời gian diễn ra vuốt
+
+      // Nếu vuốt mất quá lâu, bỏ qua
+      if (touchDuration > this.swipeMaxDuration) {
+        console.log("Vuốt quá lâu, không phải swipe hợp lệ.");
+        return;
+      }
+      var diffX = touchEndX - this.touchStartX;
+      var diffY = touchEndY - this.touchStartY;
+      var direction = null;
+      if (Math.abs(diffX) > Math.abs(diffY)) {
+        if (diffX > 30) {
+          direction = "right";
+        } else if (diffX < -30) {
+          direction = "left";
+        }
+      } else {
+        if (diffY > 30) {
+          direction = "down";
+        } else if (diffY < -30) {
+          direction = "up";
+        }
+      }
+      if (direction && this.onSwipe) {
+        this.onSwipe(direction, touchDuration);
+      }
+    }
+  }, {
+    key: "webCordianteToDeviceCoordinate",
+    value: function webCordianteToDeviceCoordinate(x, y) {
+      var videoWidth = this.videoElement.offsetWidth;
+      var videoHeight = this.videoElement.offsetHeight;
+      var displayDeviceWidth = this.fullScreenDeviceWidth / this.fullScreenDeviceHeight * videoHeight;
+      var displayDeviceHeight = videoHeight;
+      var xOnDisplayDevice = x - (videoWidth - displayDeviceWidth) / 2;
+      var yOnDisplayDevice = y;
+      var xOnDevice = xOnDisplayDevice / displayDeviceWidth * this.fullScreenDeviceWidth;
+      var yOnDevice = yOnDisplayDevice / displayDeviceHeight * this.fullScreenDeviceHeight;
+      return {
+        x: xOnDevice,
+        y: yOnDevice
+      };
+    }
+  }]);
+}();
 ;// ./src/client/static/src/main.js
+
 
 function main_log(level, message) {
   var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
@@ -793,7 +899,7 @@ var onNewTrack = function onNewTrack(track) {
   }
   UIElements.videoElement.srcObject.addTrack(track);
 };
-var webRTC = new WebRTC(clientId, window.streamState, window.getTurnstileTokenAsync, onNewTrack);
+var webRTC = new WebRTC(clientId, window.streamState, onNewTrack);
 document.getElementById('streamLeaveButton').addEventListener('click', function (e) {
   e.preventDefault();
   webRTC.leaveStream(true);
@@ -810,24 +916,35 @@ webRTC.waitForServerOnlineAndConnect();
 window.addEventListener('beforeunload', function () {
   webRTC.leaveStream(false);
 });
-UIElements.videoContainer.addEventListener('click', function (e) {
-  // show cords
-  var x = e.clientX;
-  var y = e.clientY;
-  console.log('x: ', x, ';y: ', y);
-  var videoWidth = UIElements.videoElement.offsetWidth;
-  var videoHeight = UIElements.videoElement.offsetHeight;
-  console.log('videoWidth: ', videoWidth, ';videoHeight: ', videoHeight);
-  var fullScreenDeviceWidth = 1080;
-  var fullScreenDeviceHeight = 2340;
-  var displayDeviceWidth = fullScreenDeviceWidth / fullScreenDeviceHeight * videoHeight;
-  var displayDeviceHeight = videoHeight;
-  var xOnDisplayDevice = x - (videoWidth - displayDeviceWidth) / 2;
-  var yOnDisplayDevice = y;
-  var xOnDevice = xOnDisplayDevice / displayDeviceWidth * fullScreenDeviceWidth;
-  var yOnDevice = yOnDisplayDevice / displayDeviceHeight * fullScreenDeviceHeight;
-  console.log('xOnDevice: ', xOnDevice, ';yOnDevice: ', yOnDevice);
-  webRTC.sendClickEvent(Math.round(xOnDevice), Math.round(yOnDevice));
+
+// UIElements.videoContainer.addEventListener('click', function (e) {
+//     // show cords
+//     var x = e.clientX;
+//     var y = e.clientY;
+//     console.log('x: ', x, ';y: ', y);
+//     var videoWidth = UIElements.videoElement.offsetWidth;
+//     var videoHeight = UIElements.videoElement.offsetHeight;
+//     console.log('videoWidth: ', videoWidth, ';videoHeight: ', videoHeight);
+
+//     var fullScreenDeviceWidth = 1080;
+//     var fullScreenDeviceHeight = 2340;
+
+//     var displayDeviceWidth = fullScreenDeviceWidth / fullScreenDeviceHeight * videoHeight;
+//     var displayDeviceHeight = videoHeight;
+
+//     var xOnDisplayDevice = x - (videoWidth - displayDeviceWidth) / 2;
+//     var yOnDisplayDevice = y;
+
+//     var xOnDevice = xOnDisplayDevice / displayDeviceWidth * fullScreenDeviceWidth;
+//     var yOnDevice = yOnDisplayDevice / displayDeviceHeight * fullScreenDeviceHeight;
+//     console.log('xOnDevice: ', xOnDevice, ';yOnDevice: ', yOnDevice);  
+
+//     webRTC.sendClickEvent(Math.round(xOnDevice), Math.round(yOnDevice));
+// });
+var deviceGestureHandler = new DeviceGestureHandler(UIElements.videoContainer);
+deviceGestureHandler.setOnClick(function (x, y) {
+  console.log("Send click event: ", x, y);
+  webRTC.sendClickEvent(x, y);
 });
 function generateRandomString(length) {
   var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

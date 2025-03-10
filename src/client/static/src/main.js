@@ -1,4 +1,5 @@
 import { isStreamIdValid, isStreamPasswordValid, WebRTC } from './webrtc.js';
+import { DeviceGestureHandler } from './device.gesture.handler.js';
 
 function log(level, message, context = {}) {
     console.log(`[${level}] ${message}`, context);
@@ -201,29 +202,36 @@ window.addEventListener('beforeunload', () => {
     webRTC.leaveStream(false);
 });
 
-UIElements.videoContainer.addEventListener('click', function (e) {
-    // show cords
-    var x = e.clientX;
-    var y = e.clientY;
-    console.log('x: ', x, ';y: ', y);
-    var videoWidth = UIElements.videoElement.offsetWidth;
-    var videoHeight = UIElements.videoElement.offsetHeight;
-    console.log('videoWidth: ', videoWidth, ';videoHeight: ', videoHeight);
+// UIElements.videoContainer.addEventListener('click', function (e) {
+//     // show cords
+//     var x = e.clientX;
+//     var y = e.clientY;
+//     console.log('x: ', x, ';y: ', y);
+//     var videoWidth = UIElements.videoElement.offsetWidth;
+//     var videoHeight = UIElements.videoElement.offsetHeight;
+//     console.log('videoWidth: ', videoWidth, ';videoHeight: ', videoHeight);
 
-    var fullScreenDeviceWidth = 1080;
-    var fullScreenDeviceHeight = 2340;
+//     var fullScreenDeviceWidth = 1080;
+//     var fullScreenDeviceHeight = 2340;
 
-    var displayDeviceWidth = fullScreenDeviceWidth / fullScreenDeviceHeight * videoHeight;
-    var displayDeviceHeight = videoHeight;
+//     var displayDeviceWidth = fullScreenDeviceWidth / fullScreenDeviceHeight * videoHeight;
+//     var displayDeviceHeight = videoHeight;
 
-    var xOnDisplayDevice = x - (videoWidth - displayDeviceWidth) / 2;
-    var yOnDisplayDevice = y;
+//     var xOnDisplayDevice = x - (videoWidth - displayDeviceWidth) / 2;
+//     var yOnDisplayDevice = y;
 
-    var xOnDevice = xOnDisplayDevice / displayDeviceWidth * fullScreenDeviceWidth;
-    var yOnDevice = yOnDisplayDevice / displayDeviceHeight * fullScreenDeviceHeight;
-    console.log('xOnDevice: ', xOnDevice, ';yOnDevice: ', yOnDevice);  
+//     var xOnDevice = xOnDisplayDevice / displayDeviceWidth * fullScreenDeviceWidth;
+//     var yOnDevice = yOnDisplayDevice / displayDeviceHeight * fullScreenDeviceHeight;
+//     console.log('xOnDevice: ', xOnDevice, ';yOnDevice: ', yOnDevice);  
 
-    webRTC.sendClickEvent(Math.round(xOnDevice), Math.round(yOnDevice));
+//     webRTC.sendClickEvent(Math.round(xOnDevice), Math.round(yOnDevice));
+// });
+var deviceGestureHandler = new DeviceGestureHandler(UIElements.videoContainer);
+deviceGestureHandler.setOnClick((x, y) => {
+    webRTC.sendClickEvent(x, y);
+});
+deviceGestureHandler.setOnSwipe((touchStart, touchEnd, duration) => {
+    webRTC.sendSwipeEvent(touchStart, touchEnd, duration);
 });
 
 function generateRandomString(length) {
