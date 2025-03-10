@@ -178,7 +178,7 @@ const onNewTrack = (track) => {
     UIElements.videoElement.srcObject.addTrack(track);
 };
 
-const webRTC = new WebRTC(clientId, window.streamState, window.getTurnstileTokenAsync, onNewTrack);
+const webRTC = new WebRTC(clientId, window.streamState, onNewTrack);
 
 document.getElementById('streamLeaveButton').addEventListener('click', (e) => {
     e.preventDefault();

@@ -21,10 +21,9 @@ function log(level, message, context = {}) {
 }
 
 export class WebRTC {
-    constructor(clientId, streamState, getTurnstileTokenAsync, onNewTrack) {
+    constructor(clientId, streamState, onNewTrack) {
         this.clientId = clientId;
         this.streamState = streamState;
-        this.getTurnstileTokenAsync = getTurnstileTokenAsync;
         this.onNewTrack = onNewTrack;
 
         this.socket = null;
