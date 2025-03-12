@@ -6,8 +6,8 @@ export class DeviceGestureHandler {
         this.fullScreenDeviceHeight = 2340;
 
         this.videoElement.addEventListener('click', this.handleClick.bind(this));
-        this.videoElement.addEventListener('touchstart', this.handleTouchStart.bind(this));
-        this.videoElement.addEventListener('touchend', this.handleTouchEnd.bind(this));
+        // this.videoElement.addEventListener('touchstart', this.handleTouchStart.bind(this));
+        // this.videoElement.addEventListener('touchend', this.handleTouchEnd.bind(this));
 
         this.touchStartX = 0;
         this.touchStartY = 0;
@@ -39,6 +39,7 @@ export class DeviceGestureHandler {
     }
 
     handleTouchStart(e) {
+        console.log("Touch start.");
         this.touchStartX = e.touches[0].clientX;
         this.touchStartY = e.touches[0].clientY;
         this.touchStartTime = Date.now(); // Ghi lại thời điểm bắt đầu chạm
@@ -73,7 +74,10 @@ export class DeviceGestureHandler {
             }
         }
 
+        console.log("direction: ", direction);
+
         if (direction && this.onSwipe) {
+            console.log("Swipe detected.");
             this.onSwipe(this.webCordianteToDeviceCoordinate(this.touchStartX, this.touchStartY), this.webCordianteToDeviceCoordinate(touchEndX, touchEndY), touchDuration);
         }
     }

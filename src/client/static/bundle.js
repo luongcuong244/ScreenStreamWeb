@@ -628,6 +628,20 @@ var WebRTC = /*#__PURE__*/function () {
         this.socket.emit('CLIENT:CLICK', event);
       }
     }
+  }, {
+    key: "sendSwipeEvent",
+    value: function sendSwipeEvent(touchStart, touchEnd, duration) {
+      if (this.streamState.isStreamJoined && this.streamState.isStreamRunning && this.socket) {
+        var event = {
+          touchStartX: touchStart.x,
+          touchStartY: touchStart.y,
+          touchEndX: touchEnd.x,
+          touchEndY: touchEnd.y,
+          duration: duration
+        };
+        this.socket.emit('CLIENT:SWIPE', event);
+      }
+    }
   }]);
 }();
 ;// ./src/client/static/src/device.gesture.handler.js
@@ -644,8 +658,9 @@ var DeviceGestureHandler = /*#__PURE__*/function () {
     this.fullScreenDeviceWidth = 1080;
     this.fullScreenDeviceHeight = 2340;
     this.videoElement.addEventListener('click', this.handleClick.bind(this));
-    this.videoElement.addEventListener('touchstart', this.handleTouchStart.bind(this));
-    this.videoElement.addEventListener('touchend', this.handleTouchEnd.bind(this));
+    // this.videoElement.addEventListener('touchstart', this.handleTouchStart.bind(this));
+    // this.videoElement.addEventListener('touchend', this.handleTouchEnd.bind(this));
+
     this.touchStartX = 0;
     this.touchStartY = 0;
     this.touchStartTime = 0;
@@ -682,6 +697,7 @@ var DeviceGestureHandler = /*#__PURE__*/function () {
   }, {
     key: "handleTouchStart",
     value: function handleTouchStart(e) {
+      console.log("Touch start.");
       this.touchStartX = e.touches[0].clientX;
       this.touchStartY = e.touches[0].clientY;
       this.touchStartTime = Date.now(); // Ghi lại thời điểm bắt đầu chạm
@@ -714,8 +730,10 @@ var DeviceGestureHandler = /*#__PURE__*/function () {
           direction = "up";
         }
       }
+      console.log("direction: ", direction);
       if (direction && this.onSwipe) {
-        this.onSwipe(direction, touchDuration);
+        console.log("Swipe detected.");
+        this.onSwipe(this.webCordianteToDeviceCoordinate(this.touchStartX, this.touchStartY), this.webCordianteToDeviceCoordinate(touchEndX, touchEndY), touchDuration);
       }
     }
   }, {
@@ -943,8 +961,10 @@ window.addEventListener('beforeunload', function () {
 // });
 var deviceGestureHandler = new DeviceGestureHandler(UIElements.videoContainer);
 deviceGestureHandler.setOnClick(function (x, y) {
-  console.log("Send click event: ", x, y);
   webRTC.sendClickEvent(x, y);
+});
+deviceGestureHandler.setOnSwipe(function (touchStart, touchEnd, duration) {
+  webRTC.sendSwipeEvent(touchStart, touchEnd, duration);
 });
 function generateRandomString(length) {
   var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

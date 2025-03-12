@@ -82,6 +82,9 @@ export default function (io, socket) {
         socket.removeAllListeners('CLIENT:CLICK');
         socket.on('CLIENT:CLICK', clientClick);
 
+        socket.removeAllListeners('CLIENT:SWIPE');
+        socket.on('CLIENT:SWIPE', clientSwipe);
+
         const iceServers = getIceServers(socket.data.clientId);
 
         hostSocket.timeout(SOCKET_TIMEOUT).emit('STREAM:JOIN', { clientId: socket.data.clientId, passwordHash: payload.passwordHash, iceServers }, (err, response) => {
@@ -356,6 +359,44 @@ export default function (io, socket) {
 
         hostSocket.timeout(SOCKET_TIMEOUT).emit('CLIENT:CLICK', { clientId: socket.data.clientId, clickX: payload.x, clickY: payload.y }, (err, response) => {
             
+        });
+    }
+    
+    // [CLIENT:SWIPE] ========================================================================================================
+    const clientSwipe = async (payload, callback) => {
+        const event = '[CLIENT:SWIPE]';
+
+        if (!socket.connected) {
+            logger.warn(JSON.stringify({ socket_event: event, socket: socket.id, message: 'Socket not connected. Ignoring.' }));
+            return;
+        }
+
+        const streamId = getStreamId(socket)
+        if (!streamId) {
+            logger.warn(JSON.stringify({ socket_event: event, socket: socket.id, clientId: socket.data.clientId, message: 'No stream joined. Ignoring.' }));
+            callback({ status: 'ERROR:NO_STREAM_JOINED' });
+            return;
+        }
+
+        if (!payload || !payload.startX || !payload.startY || !payload.endX || !payload.endY) {
+            console.log('Bad client swipe request. Ignoring.');
+
+            socket.data.errorCounter += 1;
+            callback({ status: 'ERROR:EMPTY_OR_BAD_DATA' });
+            return;
+        }
+
+        const hostSocket = await getHostSocket(io, streamId);
+
+        hostSocket.timeout(SOCKET_TIMEOUT).emit('CLIENT:SWIPE', {
+            clientId: socket.data.clientId,
+            touchStartX: payload.touchStartX,
+            touchStartY: payload.touchStartY,
+            touchEndX: payload.touchEndX,
+            touchEndY: payload.touchEndY,
+            duration: payload.duration,
+        }, (err, response) => {
+
         });
     }
 }
